@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SBBU Campus Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B1B1B;
+    --paper:#F7F3E8;
+    --paper-dim:#EFE9D8;
+    --green-deep:#0B3D2E;
+    --green-mid:#155C43;
+    --gold:#C9A24B;
+    --crimson:#A6383B;
+    --blue:#2E5C8A;
+    --card-shadow: 0 6px 14px rgba(11,61,46,0.12);
+    --radius: 3px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(201,162,75,0.08), transparent 40%),
+      var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+  }
+  ::selection{ background:var(--gold); color:var(--green-deep); }
+
+  header{
+    background:var(--green-deep); color:var(--paper);
+    padding:28px 20px 22px; position:relative; overflow:hidden;
+    border-bottom:4px solid var(--gold);
+  }
+  header::before{
+    content:""; position:absolute; inset:0;
+    background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 14px);
+    pointer-events:none;
+  }
+  .header-inner{ max-width:960px; margin:0 auto; position:relative; }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--gold); display:flex; align-items:center; gap:8px; margin-bottom:10px;
+  }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--gold);}
+  h1{ font-family:'Fraunces',serif; font-weight:700; font-size:clamp(28px,5vw,44px); line-height:1.05; margin:0 0 8px; }
+  header p.tag{ margin:0; font-size:14.5px; color:rgba(247,243,232,0.78); max-width:560px; }
+  .ribbon{
+    position:absolute; top:24px; right:20px; background:var(--gold); color:var(--green-deep);
+    font-family:'JetBrains Mono',monospace; font-weight:600; font-size:12px; padding:7px 12px;
+    border-radius:2px; box-shadow:0 4px 10px rgba(0,0,0,0.25); transform:rotate(3deg);
+  }
+  @media(max-width:640px){ .ribbon{ position:static; display:inline-block; margin-top:14px; transform:rotate(-1deg);} }
+
+  nav{
+    max-width:960px; margin:0 auto; display:flex; gap:4px; padding:14px 20px 0;
+    overflow-x:auto; scrollbar-width:none;
+  }
+  nav::-webkit-scrollbar{ display:none; }
+  .tab-btn{
+    font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px; white-space:nowrap;
+    background:transparent; border:none; color:var(--ink); opacity:.55;
+    padding:10px 4px 12px; margin-right:20px; cursor:pointer;
+    border-bottom:3px solid transparent; transition:opacity .2s, border-color .2s, color .2s;
+  }
+  .tab-btn:hover{ opacity:.85; }
+  .tab-btn.active{ opacity:1; color:var(--green-deep); border-bottom-color:var(--gold); }
+  .tab-btn.admin-tab{ color:var(--crimson); margin-left:auto; }
+  .tab-btn:focus-visible{ outline:2px solid var(--green-mid); outline-offset:3px; }
+
+  main{ max-width:960px; margin:0 auto; padding:24px 20px 70px; }
+  .panel{ display:none; animation: fadeUp .35s ease; }
+  .panel.active{ display:block; }
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+  @media (prefers-reduced-motion: reduce){ .panel{ animation:none; } }
+
+  .section-head{ margin-bottom:16px; display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap; }
+  .section-head h2{ font-family:'Fraunces',serif; font-size:22px; margin:0 0 4px; color:var(--green-deep); }
+  .section-head p{ margin:0; font-size:13.5px; color:#5a5648; }
+
+  .search-box{
+    font-family:'Inter',sans-serif; font-size:13px; padding:8px 12px;
+    border:1px solid #d8d2bf; border-radius:20px; background:#fff; min-width:180px;
+  }
+  .search-box:focus{ outline:2px solid var(--green-mid); }
+
+  .chips{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+  .chip{
+    font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.03em;
+    padding:5px 11px; border-radius:20px; border:1px solid #d8d2bf; background:#fff; color:#5a5648;
+    cursor:pointer; transition:all .15s;
+  }
+  .chip.active{ background:var(--green-deep); color:var(--paper); border-color:var(--green-deep); }
+
+  form.entry-form{
+    background:#fff; border:1px solid rgba(11,61,46,0.12); border-radius:var(--radius);
+    padding:18px; margin-bottom:26px; box-shadow:var(--card-shadow);
+  }
+  .row{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+  .field{ flex:1 1 200px; display:flex; flex-direction:column; gap:5px; }
+  label{ font-size:12px; font-weight:600; color:var(--green-deep); text-transform:uppercase; letter-spacing:.03em; }
+  input, textarea, select{
+    font-family:'Inter',sans-serif; font-size:14px; padding:9px 10px;
+    border:1px solid #d8d2bf; border-radius:2px; background:var(--paper); color:var(--ink);
+  }
+  input:focus, textarea:focus, select:focus{ outline:2px solid var(--green-mid); outline-offset:1px; border-color:var(--green-mid); }
+  textarea{ resize:vertical; min-height:64px; font-family:'Inter',sans-serif; }
+  .submit-btn{
+    font-family:'Inter',sans-serif; font-weight:700; font-size:13.5px;
+    background:var(--green-deep); color:var(--paper); border:none; padding:11px 20px;
+    border-radius:2px; cursor:pointer; letter-spacing:.02em; transition:background .15s, transform .1s;
+  }
+  .submit-btn:hover{ background:var(--green-mid); }
+  .submit-btn:active{ transform:scale(.98); }
+  .submit-btn:disabled{ opacity:.5; cursor:default; }
+  .submit-btn.secondary{ background:transparent; color:var(--crimson); border:1px solid var(--crimson); }
+  .submit-btn.secondary:hover{ background:#fbeaea; }
+  .hint{ font-size:11.5px; color:#8a8570; margin-top:2px; }
+
+  .cards{ display:flex; flex-direction:column; gap:12px; }
+  .empty{ font-size:13.5px; color:#8a8570; padding:22px; text-align:center; border:1px dashed #cfc7ab; border-radius:var(--radius); }
+
+  .card{
+    background:#fff; border-left:4px solid var(--gold); border-radius:var(--radius);
+    padding:14px 16px; box-shadow:var(--card-shadow); animation: fadeUp .3s ease;
+  }
+  .card.found{ border-left-color:var(--green-mid); }
+  .card.lost{ border-left-color:var(--crimson); }
+  .card.event{ border-left-color:var(--blue); }
+  .card-top{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .card-title{ font-family:'Fraunces',serif; font-weight:600; font-size:16.5px; color:var(--ink); }
+  .card-meta{ font-family:'JetBrains Mono',monospace; font-size:11px; color:#8a8570; white-space:nowrap; }
+  .card-body{ font-size:13.5px; line-height:1.5; color:#3a3730; margin-top:6px; }
+  .tag{
+    display:inline-block; font-family:'JetBrains Mono',monospace; font-size:10.5px; text-transform:uppercase;
+    letter-spacing:.05em; padding:2px 7px; border-radius:2px; margin-right:6px; margin-top:6px;
+    background:var(--paper-dim); color:var(--green-deep);
+  }
+  .tag.lost{ background:#f3e0e0; color:var(--crimson); }
+  .tag.found{ background:#e0ebe5; color:var(--green-mid); }
+  .tag.blue{ background:#e2ecf5; color:var(--blue); }
+  .contact-line{ margin-top:8px; font-size:12.5px; color:var(--green-mid); font-weight:600; }
+  .price-tag{ font-family:'JetBrains Mono',monospace; font-weight:600; color:var(--green-mid); font-size:14px; }
+
+  .cat-pill{
+    font-family:'JetBrains Mono',monospace; font-size:10.5px; text-transform:uppercase;
+    background:#f3e0e0; color:var(--crimson); padding:2px 8px; border-radius:10px;
+  }
+  .cat-pill.blue{ background:#e2ecf5; color:var(--blue); }
+
+  .join-btn{
+    font-family:'Inter',sans-serif; font-weight:600; font-size:12.5px;
+    background:var(--blue); color:#fff; border:none; padding:7px 14px; border-radius:20px;
+    cursor:pointer; margin-top:10px; transition:background .15s;
+  }
+  .join-btn:hover{ background:#254a70; }
+  .join-btn.joined{ background:#dfe6ec; color:var(--blue); cursor:default; }
+
+  .status-msg{ font-size:12.5px; margin-top:8px; min-height:16px; }
+  .status-msg.ok{ color:var(--green-mid); }
+  .status-msg.err{ color:var(--crimson); }
+
+  /* Admin */
+  .admin-lock{
+    background:#fff; border:1px solid rgba(11,61,46,0.12); border-radius:var(--radius);
+    padding:22px; max-width:360px; box-shadow:var(--card-shadow);
+  }
+  .stats-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; margin-bottom:24px; }
+  .stat-card{
+    background:#fff; border-top:3px solid var(--gold); border-radius:var(--radius);
+    padding:14px; box-shadow:var(--card-shadow);
+  }
+  .stat-num{ font-family:'Fraunces',serif; font-size:26px; color:var(--green-deep); font-weight:700; }
+  .stat-label{ font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#8a8570; margin-top:2px; }
+
+  .admin-row{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    background:#fff; border-radius:2px; padding:10px 14px; margin-bottom:8px;
+    border:1px solid rgba(11,61,46,0.08); font-size:13px;
+  }
+  .admin-row-text{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .del-btn{
+    font-family:'JetBrains Mono',monospace; font-size:11px; background:none; border:1px solid var(--crimson);
+    color:var(--crimson); padding:4px 10px; border-radius:2px; cursor:pointer; flex-shrink:0;
+  }
+  .del-btn:hover{ background:var(--crimson); color:#fff; }
+  .admin-group-title{
+    font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--green-deep); margin:22px 0 10px;
+  }
+
+  footer{ text-align:center; padding:26px 20px 40px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#8a8570; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="eyebrow"><span class="dot"></span>Shaheed Benazir Bhutto University · Shaheed Benazirabad</div>
+    <h1>Campus Companion</h1>
+    <p class="tag">Notices, events, lost &amp; found, marketplace aur seedhi awaaz — sab ek jagah, hamesha ke liye.</p>
+  </div>
+  <div class="ribbon" id="dayBadge">14 Aug ko 3 din baaqi</div>
+</header>
+
+<nav>
+  <button class="tab-btn active" data-tab="announcements">Announcements</button>
+  <button class="tab-btn" data-tab="events">Events &amp; Societies</button>
+  <button class="tab-btn" data-tab="lostfound">Lost &amp; Found</button>
+  <button class="tab-btn" data-tab="marketplace">Marketplace</button>
+  <button class="tab-btn" data-tab="complaints">Complaint Box</button>
+  <button class="tab-btn admin-tab" data-tab="admin">Admin</button>
+</nav>
+
+<main>
+
+  <!-- ANNOUNCEMENTS -->
+  <section class="panel active" id="panel-announcements">
+    <div class="section-head">
+      <div>
+        <h2>Announcements</h2>
+        <p>University notices, exam dates, society news — sab students ke liye ek jagah.</p>
+      </div>
+      <input class="search-box" id="a-search" placeholder="Search announcements...">
+    </div>
+
+    <div class="chips" id="a-chips">
+      <button class="chip active" data-cat="All">All</button>
+      <button class="chip" data-cat="General">General</button>
+      <button class="chip" data-cat="Academics">Academics</button>
+      <button class="chip" data-cat="Exam/Datesheet">Exam/Datesheet</button>
+      <button class="chip" data-cat="Society">Society</button>
+      <button class="chip" data-cat="Emergency">Emergency</button>
+    </div>
+
+    <form class="entry-form" id="form-announcement">
+      <div class="row">
+        <div class="field" style="flex:2 1 240px;">
+          <label for="a-title">Title</label>
+          <input id="a-title" required maxlength="80" placeholder="e.g. Mid-Term Datesheet Released">
+        </div>
+        <div class="field" style="flex:0 0 150px;">
+          <label for="a-cat">Category</label>
+          <select id="a-cat">
+            <option>General</option>
+            <option>Academics</option>
+            <option>Exam/Datesheet</option>
+            <option>Society</option>
+            <option>Emergency</option>
+          </select>
+        </div>
+        <div class="field" style="flex:0 0 140px;">
+          <label for="a-key">Admin Key</label>
+          <input id="a-key" type="password" placeholder="Passcode">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="a-body">Message</label>
+          <textarea id="a-body" required maxlength="500" placeholder="Details of the announcement..."></textarea>
+        </div>
+      </div>
+      <button class="submit-btn" type="submit">Post Announcement</button>
+      <div class="hint">Demo passcode: <strong>SBBU2026</strong> — sirf mentors/admins ke paas hona chahiye.</div>
+      <div class="status-msg" id="a-status"></div>
+    </form>
+
+    <div class="cards" id="announcement-list"></div>
+  </section>
+
+  <!-- EVENTS & SOCIETIES -->
+  <section class="panel" id="panel-events">
+    <div class="section-head">
+      <div>
+        <h2>Events &amp; Societies</h2>
+        <p>Society events, workshops, competitions — post karo, students "Interested" mark karein.</p>
+      </div>
+      <input class="search-box" id="e-search" placeholder="Search events...">
+    </div>
+
+    <form class="entry-form" id="form-event">
+      <div class="row">
+        <div class="field" style="flex:2 1 220px;">
+          <label for="e-title">Event Title</label>
+          <input id="e-title" required maxlength="70" placeholder="e.g. Jashn-e-Azadi Ceremony">
+        </div>
+        <div class="field">
+          <label for="e-society">Society / Dept</label>
+          <input id="e-society" required maxlength="50" placeholder="e.g. IT Society">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field" style="flex:0 0 170px;">
+          <label for="e-date">Date</label>
+          <input id="e-date" type="date" required>
+        </div>
+        <div class="field">
+          <label for="e-venue">Venue</label>
+          <input id="e-venue" required maxlength="60" placeholder="e.g. Main Auditorium">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="e-desc">Description</label>
+          <textarea id="e-desc" maxlength="300" placeholder="What's happening, who can join..."></textarea>
+        </div>
+      </div>
+      <button class="submit-btn" type="submit">Post Event</button>
+      <div class="status-msg" id="e-status"></div>
+    </form>
+
+    <div class="cards" id="event-list"></div>
+  </section>
+
+  <!-- LOST & FOUND -->
+  <section class="panel" id="panel-lostfound">
+    <div class="section-head">
+      <div>
+        <h2>Lost &amp; Found</h2>
+        <p>Kuch kho gaya ya mila? Yahan post karo — pura campus dekh sake.</p>
+      </div>
+      <input class="search-box" id="lf-search" placeholder="Search items...">
+    </div>
+
+    <form class="entry-form" id="form-lostfound">
+      <div class="row">
+        <div class="field" style="flex:0 0 130px;">
+          <label for="lf-type">Type</label>
+          <select id="lf-type">
+            <option value="lost">Lost</option>
+            <option value="found">Found</option>
+          </select>
+        </div>
+        <div class="field" style="flex:2 1 220px;">
+          <label for="lf-item">Item</label>
+          <input id="lf-item" required maxlength="60" placeholder="e.g. Blue backpack, Student card">
+        </div>
+        <div class="field">
+          <label for="lf-location">Location</label>
+          <input id="lf-location" required maxlength="60" placeholder="e.g. IT Block, Cafeteria">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="lf-desc">Description</label>
+          <textarea id="lf-desc" maxlength="300" placeholder="Color, brand, any identifying detail..."></textarea>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="lf-contact">Contact</label>
+          <input id="lf-contact" required maxlength="60" placeholder="Phone / WhatsApp / email">
+        </div>
+      </div>
+      <button class="submit-btn" type="submit">Post Item</button>
+      <div class="status-msg" id="lf-status"></div>
+    </form>
+
+    <div class="cards" id="lostfound-list"></div>
+  </section>
+
+  <!-- MARKETPLACE -->
+  <section class="panel" id="panel-marketplace">
+    <div class="section-head">
+      <div>
+        <h2>Student Marketplace</h2>
+        <p>Books, cycles, calculators, hostel items — seniors se juniors tak, sasti aur asaan.</p>
+      </div>
+      <input class="search-box" id="m-search" placeholder="Search listings...">
+    </div>
+
+    <form class="entry-form" id="form-market">
+      <div class="row">
+        <div class="field" style="flex:0 0 150px;">
+          <label for="m-cat">Category</label>
+          <select id="m-cat">
+            <option>Books</option>
+            <option>Electronics</option>
+            <option>Cycle/Bike</option>
+            <option>Hostel Items</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field" style="flex:2 1 220px;">
+          <label for="m-title">Item</label>
+          <input id="m-title" required maxlength="70" placeholder="e.g. Calculus Textbook, 3rd Ed">
+        </div>
+        <div class="field" style="flex:0 0 120px;">
+          <label for="m-price">Price (Rs)</label>
+          <input id="m-price" type="number" min="0" required placeholder="500">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="m-desc">Description</label>
+          <textarea id="m-desc" maxlength="300" placeholder="Condition, edition, any detail..."></textarea>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="m-contact">Contact</label>
+          <input id="m-contact" required maxlength="60" placeholder="Phone / WhatsApp / email">
+        </div>
+      </div>
+      <button class="submit-btn" type="submit">List Item</button>
+      <div class="status-msg" id="m-status"></div>
+    </form>
+
+    <div class="cards" id="market-list"></div>
+  </section>
+
+  <!-- COMPLAINT BOX -->
+  <section class="panel" id="panel-complaints">
+    <div class="section-head">
+      <div>
+        <h2>Anonymous Complaint Box</h2>
+        <p>Naam zaruri nahi. Seedha issue batao — sab students isay dekh sakte hain, admin bhi.</p>
+      </div>
+    </div>
+
+    <form class="entry-form" id="form-complaint">
+      <div class="row">
+        <div class="field" style="flex:0 0 180px;">
+          <label for="c-category">Category</label>
+          <select id="c-category">
+            <option>Academics</option>
+            <option>Canteen</option>
+            <option>Wi-Fi / IT</option>
+            <option>Transport</option>
+            <option>Facilities</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="c-body">Complaint / Suggestion</label>
+          <textarea id="c-body" required maxlength="400" placeholder="Bina jhijak likho — ye anonymous hai."></textarea>
+        </div>
+      </div>
+      <button class="submit-btn" type="submit">Submit Anonymously</button>
+      <div class="status-msg" id="c-status"></div>
+    </form>
+
+    <div class="cards" id="complaint-list"></div>
+  </section>
+
+  <!-- ADMIN -->
+  <section class="panel" id="panel-admin">
+    <div class="section-head">
+      <div>
+        <h2>Admin Dashboard</h2>
+        <p>Sab sections ka overview aur management — sirf authorized mentors/admins ke liye.</p>
+      </div>
+    </div>
+
+    <div class="admin-lock" id="admin-lock">
+      <label for="admin-key-input">Enter Admin Key</label>
+      <input id="admin-key-input" type="password" placeholder="Passcode" style="margin-top:8px; width:100%;">
+      <button class="submit-btn" id="admin-unlock-btn" style="margin-top:12px; width:100%;">Unlock Dashboard</button>
+      <div class="status-msg" id="admin-lock-status"></div>
+    </div>
+
+    <div id="admin-content" style="display:none;">
+      <div class="stats-grid" id="admin-stats"></div>
+      <div id="admin-groups"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>SBBU Campus Companion — built by Waqas Ashfaque, 24BSIT · Independence Day 2026</footer>
+
+<script>
+  const ADMIN_KEY = 'SBBU2026';
+  let isAdmin = false;
+
+  // ---------- Tabs ----------
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+      if(btn.dataset.tab === 'admin' && isAdmin) renderAdmin();
+    });
+  });
+
+  // ---------- Day badge ----------
+  (function(){
+    const today = new Date('2026-08-11');
+    const target = new Date('2026-08-14');
+    const diff = Math.round((target - today)/(1000*60*60*24));
+    document.getElementById('dayBadge').textContent =
+      diff > 0 ? `14 Aug ko ${diff} din baaqi` : 'Jashn-e-Azadi Mubarak!';
+  })();
+
+  // ---------- Storage helpers ----------
+  async function loadList(key, shared=true){
+    try{
+      const res = await window.storage.get(key, shared);
+      return res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){ return []; }
+  }
+  async function saveList(key, list, shared=true){
+    try{ await window.storage.set(key, JSON.stringify(list), shared); return true; }
+    catch(e){ return false; }
+  }
+  function timeAgo(ts){
+    const s = Math.floor((Date.now()-ts)/1000);
+    if(s<60) return 'just now';
+    if(s<3600) return Math.floor(s/60)+'m ago';
+    if(s<86400) return Math.floor(s/3600)+'h ago';
+    return Math.floor(s/86400)+'d ago';
+  }
+  function esc(str){ const d=document.createElement('div'); d.textContent = str ?? ''; return d.innerHTML; }
+  function makeId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+
+  // ================= ANNOUNCEMENTS =================
+  let annCache = [];
+  let annFilterCat = 'All';
+  let annSearchTerm = '';
+  const annList = document.getElementById('announcement-list');
+  const annForm = document.getElementById('form-announcement');
+  const annStatus = document.getElementById('a-status');
+
+  document.querySelectorAll('#a-chips .chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      document.querySelectorAll('#a-chips .chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+      annFilterCat = chip.dataset.cat;
+      drawAnnouncements();
+    });
+  });
+  document.getElementById('a-search').addEventListener('input', (e)=>{
+    annSearchTerm = e.target.value.toLowerCase();
+    drawAnnouncements();
+  });
+
+  function drawAnnouncements(){
+    let items = annCache.slice().reverse();
+    if(annFilterCat !== 'All') items = items.filter(it=>it.category===annFilterCat);
+    if(annSearchTerm) items = items.filter(it=> (it.title+it.body).toLowerCase().includes(annSearchTerm));
+    if(!items.length){ annList.innerHTML = '<div class="empty">Koi announcement nahi mila.</div>'; return; }
+    annList.innerHTML = items.map(it => `
+      <div class="card">
+        <div class="card-top">
+          <div class="card-title">${esc(it.title)}</div>
+          <div class="card-meta">${timeAgo(it.ts)}</div>
+        </div>
+        <span class="tag">${esc(it.category)}</span>
+        <div class="card-body">${esc(it.body)}</div>
+      </div>
+    `).join('');
+  }
+
+  async function renderAnnouncements(){
+    annList.innerHTML = '<div class="empty">Loading…</div>';
+    annCache = await loadList('sbbu-announcements');
+    drawAnnouncements();
+  }
+
+  annForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const key = document.getElementById('a-key').value.trim();
+    if(key !== ADMIN_KEY){
+      annStatus.textContent = 'Galat admin key.'; annStatus.className='status-msg err';
+      return;
+    }
+    const title = document.getElementById('a-title').value.trim();
+    const body = document.getElementById('a-body').value.trim();
+    const category = document.getElementById('a-cat').value;
+    if(!title || !body) return;
+
+    const btn = annForm.querySelector('.submit-btn'); btn.disabled = true;
+    annCache.push({ id: makeId(), title, body, category, ts: Date.now() });
+    const ok = await saveList('sbbu-announcements', annCache);
+    btn.disabled = false;
+    if(ok){
+      annStatus.textContent = 'Posted!'; annStatus.className='status-msg ok';
+      annForm.reset();
+      drawAnnouncements();
+    } else {
+      annStatus.textContent = 'Kuch masla hua, dobara try karo.'; annStatus.className='status-msg err';
+    }
+  });
+
+  // ================= EVENTS =================
+  let eventCache = [];
+  let eventSearchTerm = '';
+  let joinedEvents = [];
+  const eventList = document.getElementById('event-list');
+  const eventForm = document.getElementById('form-event');
+  const eventStatus = document.getElementById('e-status');
+
+  document.getElementById('e-search').addEventListener('input', (e)=>{
+    eventSearchTerm = e.target.value.toLowerCase();
+    drawEvents();
+  });
+
+  function drawEvents(){
+    let items = eventCache.slice().sort((a,b)=> new Date(a.date) - new Date(b.date));
+    if(eventSearchTerm) items = items.filter(it=> (it.title+it.society+it.venue).toLowerCase().includes(eventSearchTerm));
+    if(!items.length){ eventList.innerHTML = '<div class="empty">Koi event nahi mila — pehla event yahin se post karo.</div>'; return; }
+    eventList.innerHTML = items.map(it => {
+      const joined = joinedEvents.includes(it.id);
+      const dateFmt = new Date(it.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+      return `
+      <div class="card event">
+        <div class="card-top">
+          <div class="card-title">${esc(it.title)}</div>
+          <div class="card-meta">${dateFmt}</div>
+        </div>
+        <span class="tag blue">${esc(it.society)}</span>
+        <span class="tag">📍 ${esc(it.venue)}</span>
+        <div class="card-body">${esc(it.desc || '')}</div>
+        <button class="join-btn ${joined?'joined':''}" data-id="${it.id}" ${joined?'disabled':''}>
+          ${joined ? '✓ Interested' : `Interested (${it.interested||0})`}
+        </button>
+      </div>`;
+    }).join('');
+
+    eventList.querySelectorAll('.join-btn:not(.joined)').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.dataset.id;
+        btn.disabled = true;
+        const item = eventCache.find(x=>x.id===id);
+        if(item){ item.interested = (item.interested||0)+1; }
+        joinedEvents.push(id);
+        await saveList('sbbu-events', eventCache);
+        await saveList('sbbu-joined-events', joinedEvents, false);
+        drawEvents();
+      });
+    });
+  }
+
+  async function renderEvents(){
+    eventList.innerHTML = '<div class="empty">Loading…</div>';
+    eventCache = await loadList('sbbu-events');
+    joinedEvents = await loadList('sbbu-joined-events', false);
+    drawEvents();
+  }
+
+  eventForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const title = document.getElementById('e-title').value.trim();
+    const society = document.getElementById('e-society').value.trim();
+    const date = document.getElementById('e-date').value;
+    const venue = document.getElementById('e-venue').value.trim();
+    const desc = document.getElementById('e-desc').value.trim();
+    if(!title || !society || !date || !venue) return;
+
+    const btn = eventForm.querySelector('.submit-btn'); btn.disabled = true;
+    eventCache.push({ id: makeId(), title, society, date, venue, desc, interested:0, ts: Date.now() });
+    const ok = await saveList('sbbu-events', eventCache);
+    btn.disabled = false;
+    if(ok){
+      eventStatus.textContent = 'Posted!'; eventStatus.className='status-msg ok';
+      eventForm.reset();
+      drawEvents();
+    } else {
+      eventStatus.textContent = 'Kuch masla hua, dobara try karo.'; eventStatus.className='status-msg err';
+    }
+  });
+
+  // ================= LOST & FOUND =================
+  let lfCache = [];
+  let lfSearchTerm = '';
+  const lfList = document.getElementById('lostfound-list');
+  const lfForm = document.getElementById('form-lostfound');
+  const lfStatus = document.getElementById('lf-status');
+
+  document.getElementById('lf-search').addEventListener('input', (e)=>{
+    lfSearchTerm = e.target.value.toLowerCase();
+    drawLostFound();
+  });
+
+  function drawLostFound(){
+    let items = lfCache.slice().reverse();
+    if(lfSearchTerm) items = items.filter(it=> (it.item+it.location+(it.desc||'')).toLowerCase().includes(lfSearchTerm));
+    if(!items.length){ lfList.innerHTML = '<div class="empty">Koi item nahi mila — agar kuch khoya ya mila hai, yahan daalo.</div>'; return; }
+    lfList.innerHTML = items.map(it => `
+      <div class="card ${it.type}">
+        <div class="card-top">
+          <div class="card-title">${esc(it.item)}</div>
+          <div class="card-meta">${timeAgo(it.ts)}</div>
+        </div>
+        <div>
+          <span class="tag ${it.type}">${it.type}</span>
+          <span class="tag">📍 ${esc(it.location)}</span>
+        </div>
+        <div class="card-body">${esc(it.desc || '')}</div>
+        <div class="contact-line">Contact: ${esc(it.contact)}</div>
+      </div>
+    `).join('');
+  }
+
+  async function renderLostFound(){
+    lfList.innerHTML = '<div class="empty">Loading…</div>';
+    lfCache = await loadList('sbbu-lostfound');
+    drawLostFound();
+  }
+
+  lfForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const type = document.getElementById('lf-type').value;
+    const item = document.getElementById('lf-item').value.trim();
+    const location = document.getElementById('lf-location').value.trim();
+    const desc = document.getElementById('lf-desc').value.trim();
+    const contact = document.getElementById('lf-contact').value.trim();
+    if(!item || !location || !contact) return;
+
+    const btn = lfForm.querySelector('.submit-btn'); btn.disabled = true;
+    lfCache.push({ id: makeId(), type, item, location, desc, contact, ts: Date.now() });
+    const ok = await saveList('sbbu-lostfound', lfCache);
+    btn.disabled = false;
+    if(ok){
+      lfStatus.textContent = 'Posted!'; lfStatus.className='status-msg ok';
+      lfForm.reset();
+      drawLostFound();
+    } else {
+      lfStatus.textContent = 'Kuch masla hua, dobara try karo.'; lfStatus.className='status-msg err';
+    }
+  });
+
+  // ================= MARKETPLACE =================
+  let marketCache = [];
+  let marketSearchTerm = '';
+  const marketList = document.getElementById('market-list');
+  const marketForm = document.getElementById('form-market');
+  const marketStatus = document.getElementById('m-status');
+
+  document.getElementById('m-search').addEventListener('input', (e)=>{
+    marketSearchTerm = e.target.value.toLowerCase();
+    drawMarket();
+  });
+
+  function drawMarket(){
+    let items = marketCache.slice().reverse();
+    if(marketSearchTerm) items = items.filter(it=> (it.title+it.category+(it.desc||'')).toLowerCase().includes(marketSearchTerm));
+    if(!items.length){ marketList.innerHTML = '<div class="empty">Koi listing nahi mili — apna pehla item list karo.</div>'; return; }
+    marketList.innerHTML = items.map(it => `
+      <div class="card">
+        <div class="card-top">
+          <div class="card-title">${esc(it.title)}</div>
+          <div class="price-tag">Rs ${esc(String(it.price))}</div>
+        </div>
+        <span class="tag">${esc(it.category)}</span>
+        <div class="card-body">${esc(it.desc || '')}</div>
+        <div class="contact-line">Contact: ${esc(it.contact)}</div>
+      </div>
+    `).join('');
+  }
+
+  async function renderMarket(){
+    marketList.innerHTML = '<div class="empty">Loading…</div>';
+    marketCache = await loadList('sbbu-marketplace');
+    drawMarket();
+  }
+
+  marketForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const category = document.getElementById('m-cat').value;
+    const title = document.getElementById('m-title').value.trim();
+    const price = document.getElementById('m-price').value;
+    const desc = document.getElementById('m-desc').value.trim();
+    const contact = document.getElementById('m-contact').value.trim();
+    if(!title || !price || !contact) return;
+
+    const btn = marketForm.querySelector('.submit-btn'); btn.disabled = true;
+    marketCache.push({ id: makeId(), category, title, price, desc, contact, ts: Date.now() });
+    const ok = await saveList('sbbu-marketplace', marketCache);
+    btn.disabled = false;
+    if(ok){
+      marketStatus.textContent = 'Listed!'; marketStatus.className='status-msg ok';
+      marketForm.reset();
+      drawMarket();
+    } else {
+      marketStatus.textContent = 'Kuch masla hua, dobara try karo.'; marketStatus.className='status-msg err';
+    }
+  });
+
+  // ================= COMPLAINTS =================
+  let complaintCache = [];
+  const cList = document.getElementById('complaint-list');
+  const cForm = document.getElementById('form-complaint');
+  const cStatus = document.getElementById('c-status');
+
+  function drawComplaints(){
+    const items = complaintCache.slice().reverse();
+    if(!items.length){ cList.innerHTML = '<div class="empty">Abhi koi complaint nahi — awaaz uthao, bilkul anonymous.</div>'; return; }
+    cList.innerHTML = items.map(it => `
+      <div class="card complaint-card">
+        <div class="card-top">
+          <span class="cat-pill">${esc(it.category)}</span>
+          <div class="card-meta">${timeAgo(it.ts)}</div>
+        </div>
+        <div class="card-body">${esc(it.body)}</div>
+      </div>
+    `).join('');
+  }
+
+  async function renderComplaints(){
+    cList.innerHTML = '<div class="empty">Loading…</div>';
+    complaintCache = await loadList('sbbu-complaints');
+    drawComplaints();
+  }
+
+  cForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const category = document.getElementById('c-category').value;
+    const body = document.getElementById('c-body').value.trim();
+    if(!body) return;
+
+    const btn = cForm.querySelector('.submit-btn'); btn.disabled = true;
+    complaintCache.push({ id: makeId(), category, body, ts: Date.now() });
+    const ok = await saveList('sbbu-complaints', complaintCache);
+    btn.disabled = false;
+    if(ok){
+      cStatus.textContent = 'Jama ho gaya — shukriya.'; cStatus.className='status-msg ok';
+      cForm.reset();
+      drawComplaints();
+    } else {
+      cStatus.textContent = 'Kuch masla hua, dobara try karo.'; cStatus.className='status-msg err';
+    }
+  });
+
+  // ================= ADMIN =================
+  document.getElementById('admin-unlock-btn').addEventListener('click', ()=>{
+    const val = document.getElementById('admin-key-input').value.trim();
+    const statusEl = document.getElementById('admin-lock-status');
+    if(val === ADMIN_KEY){
+      isAdmin = true;
+      document.getElementById('admin-lock').style.display = 'none';
+      document.getElementById('admin-content').style.display = 'block';
+      renderAdmin();
+    } else {
+      statusEl.textContent = 'Galat passcode.'; statusEl.className = 'status-msg err';
+    }
+  });
+
+  function statCard(num, label){
+    return `<div class="stat-card"><div class="stat-num">${num}</div><div class="stat-label">${label}</div></div>`;
+  }
+
+  function adminRow(text, key, id){
+    return `<div class="admin-row">
+      <div class="admin-row-text">${esc(text)}</div>
+      <button class="del-btn" data-key="${key}" data-id="${id}">Delete</button>
+    </div>`;
+  }
+
+  async function renderAdmin(){
+    const statsEl = document.getElementById('admin-stats');
+    const groupsEl = document.getElementById('admin-groups');
+    statsEl.innerHTML = `<div class="empty">Loading…</div>`;
+    groupsEl.innerHTML = '';
+
+    statsEl.innerHTML =
+      statCard(annCache.length, 'Announcements') +
+      statCard(eventCache.length, 'Events') +
+      statCard(lfCache.length, 'Lost & Found') +
+      statCard(marketCache.length, 'Marketplace') +
+      statCard(complaintCache.length, 'Complaints');
+
+    const groups = [
+      { title:'Announcements', key:'sbbu-announcements', cache:annCache, label:it=>`${it.category}: ${it.title}` },
+      { title:'Events', key:'sbbu-events', cache:eventCache, label:it=>`${it.title} — ${it.society}` },
+      { title:'Lost & Found', key:'sbbu-lostfound', cache:lfCache, label:it=>`[${it.type}] ${it.item}` },
+      { title:'Marketplace', key:'sbbu-marketplace', cache:marketCache, label:it=>`${it.title} — Rs ${it.price}` },
+      { title:'Complaints', key:'sbbu-complaints', cache:complaintCache, label:it=>`[${it.category}] ${it.body}` },
+    ];
+
+    groupsEl.innerHTML = groups.map(g => `
+      <div class="admin-group-title">${g.title} (${g.cache.length})</div>
+      ${g.cache.length ? g.cache.slice().reverse().map(it=>adminRow(g.label(it), g.key, it.id)).join('') : '<div class="empty">Khaali hai.</div>'}
+    `).join('');
+
+    groupsEl.querySelectorAll('.del-btn').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const key = btn.dataset.key;
+        const id = btn.dataset.id;
+        const map = {
+          'sbbu-announcements': annCache, 'sbbu-events': eventCache,
+          'sbbu-lostfound': lfCache, 'sbbu-marketplace': marketCache, 'sbbu-complaints': complaintCache
+        };
+        const arr = map[key];
+        const idx = arr.findIndex(x=>x.id===id);
+        if(idx>-1) arr.splice(idx,1);
+        await saveList(key, arr);
+        drawAnnouncements(); drawEvents(); drawLostFound(); drawMarket(); drawComplaints();
+        renderAdmin();
+      });
+    });
+  }
+
+  // ---------- Init ----------
+  renderAnnouncements();
+  renderEvents();
+  renderLostFound();
+  renderMarket();
+  renderComplaints();
+</script>
+
+</body>
+</html>
